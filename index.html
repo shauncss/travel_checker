@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Insight Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Weather & Currency Hub</h1>
+            <p>Real-time global data at your fingertips</p>
+        </header>
+
+        <section class="search-box-container">
+            <div class="search-box">
+                <input type="text" id="cityInput" placeholder="Enter City (e.g., London)" autocomplete="off">
+                <button onclick="fetchAllData(document.getElementById('cityInput').value)">Search</button>
+            </div>
+            <div id="suggestions" class="suggestions-list"></div>
+        </section>
+
+        <div class="dashboard-grid">
+            <div class="card" id="weatherResult">
+                <h3>Weather</h3>
+                <div id="weatherContent">Search a city to see data...</div>
+            </div>
+            <div class="card" id="currencyResult">
+                <h3>Currency (vs USD)</h3>
+                <div id="currencyContent">Rate: --</div>
+                <canvas id="currencyChart"></canvas>
+            </div>
+        </div>
+
+        <section class="comparison-tool">
+            <h2>Comparison Tool</h2>
+            <div class="compare-inputs">
+                <input type="text" id="city1" placeholder="First City">
+                <span>VS</span>
+                <input type="text" id="city2" placeholder="Second City">
+            </div>
+            <button class="compare-btn" onclick="compareSystems()">Compare Now</button>
+            <div id="compareResult" class="compare-grid"></div>
+        </section>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
