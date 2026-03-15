@@ -1,8 +1,6 @@
 const WEATHER_API_KEY = 'b434ff3976028ba7857717d7199e82dc';
 const CURRENCY_API_KEY = '34e27998104b1a49bd15e736';
 let myChart;
-let liveRate = 0;
-let liveCode = '';
 
 // Tab Switcher
 function switchTab(tabId, btn) {
@@ -12,7 +10,7 @@ function switchTab(tabId, btn) {
     btn.classList.add('active');
 }
 
-// Dropdown Logic [Fixing Bug 1]
+// Dropdown Search Logic
 const cityInput = document.getElementById('cityInput');
 const suggestionsBox = document.getElementById('suggestions');
 
@@ -38,32 +36,31 @@ function selectCity(name, country) {
     fetchAllData(label);
 }
 
-// Custom Currency Calculation [Requirement 5]
-function calculateCustomCurrency() {
-    const amount = document.getElementById('usdAmount').value;
-    const result = amount * liveRate;
-    document.getElementById('convertedValue').innerText = `${result.toLocaleString(undefined, {minimumFractionDigits: 2})} ${liveCode}`;
-}
-
-// Main Fetch
+// Main Fetch for Dashboard
 async function fetchAllData(city) {
     try {
         const wRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API_KEY}`);
         const w = await wRes.json();
         
-        liveCode = getCurrencyCode(w.sys.country);
-        const cRes = await fetch(`https://v6.exchangerate-api.com/v6/${CURRENCY_API_KEY}/latest/USD`);
-        const c = await cRes.json();
+        // Update weather UI
+        updateWeatherUI(w);
         
-        liveRate = c.conversion_rates[liveCode];
-        updateUI(w);
-        calculateCustomCurrency();
-        renderChart(liveCode, liveRate);
-    } catch (err) { alert("Data fetch failed."); }
+        // Automatically switch target currency to the searched country's currency
+        const detectedCurrency = getCurrencyCode(w.sys.country);
+        const targetDropdown = document.getElementById('targetCurrency');
+        
+        // If the currency isn't in our dropdown, add it temporarily so it works
+        if (![...targetDropdown.options].map(o => o.value).includes(detectedCurrency)) {
+            targetDropdown.add(new Option(detectedCurrency, detectedCurrency));
+        }
+        targetDropdown.value = detectedCurrency;
+        
+        // Run the new conversion logic
+        calculateConversion();
+    } catch (err) { alert("Data fetch failed. Please check the city name."); }
 }
 
-function updateUI(w) {
-    // Meters calculation [Requirement 7]
+function updateWeatherUI(w) {
     const tempPct = Math.min(Math.max((w.main.temp + 10) * 2, 0), 100);
     const humPct = w.main.humidity;
     const windPct = Math.min(w.wind.speed * 5, 100);
@@ -78,7 +75,6 @@ function updateUI(w) {
             ${renderStat("Wind Speed", w.wind.speed + " m/s", windPct)}
         </div>
     `;
-    document.getElementById('currencyContent').innerHTML = `1 USD = ${liveRate.toFixed(2)} ${liveCode}`;
 }
 
 function renderStat(label, val, pct) {
@@ -90,7 +86,56 @@ function renderStat(label, val, pct) {
     `;
 }
 
-// Time Zone Logic [Requirement 4]
+// Full Currency Conversion Logic [Requirements 3 & 4]
+async function calculateConversion() {
+    const amount = document.getElementById('convertAmount').value || 1;
+    const base = document.getElementById('baseCurrency').value;
+    const target = document.getElementById('targetCurrency').value;
+
+    try {
+        const res = await fetch(`https://v6.exchangerate-api.com/v6/${CURRENCY_API_KEY}/pair/${base}/${target}/${amount}`);
+        const data = await res.json();
+        
+        document.getElementById('displayAmount').innerText = parseFloat(amount).toFixed(2);
+        document.getElementById('displayBase').innerText = base;
+        
+        if (data.result === "success") {
+            document.getElementById('convertedValue').innerText = `${data.conversion_result.toLocaleString(undefined, {minimumFractionDigits: 2})} ${target}`;
+            renderChart(target, data.conversion_rate); 
+        } else {
+            document.getElementById('convertedValue').innerText = "Error";
+        }
+    } catch (e) { console.error("Conversion error", e); }
+}
+
+// Swap Functionality [Requirement 3]
+function swapCurrencies() {
+    const baseSelect = document.getElementById('baseCurrency');
+    const targetSelect = document.getElementById('targetCurrency');
+    
+    // Swap the values
+    const temp = baseSelect.value;
+    baseSelect.value = targetSelect.value;
+    targetSelect.value = temp;
+    
+    // Recalculate based on new swapped values
+    calculateConversion();
+}
+
+function renderChart(code, rate) {
+    const ctx = document.getElementById('currencyChart').getContext('2d');
+    if (myChart) myChart.destroy();
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['M','T','W','T','F','Today'],
+            datasets: [{ label: `Rate Trend`, data: [rate*0.98, rate*1.01, rate*1.02, rate*0.99, rate*1.01, rate], borderColor: '#38bdf8', tension: 0.4 }]
+        },
+        options: { plugins: { legend: { display: false } } }
+    });
+}
+
+// Time Zones Comparison
 async function compareTimeZones() {
     const c1 = document.getElementById('tzCity1').value;
     const c2 = document.getElementById('tzCity2').value;
@@ -113,21 +158,33 @@ async function compareTimeZones() {
     } catch (e) { resultDiv.innerHTML = "Error loading time data."; }
 }
 
-// Mapping & Chart Logic (Simplified)
+// Comparison Tool
+async function compareSystems() {
+    const c1 = document.getElementById('city1').value;
+    const c2 = document.getElementById('city2').value;
+    const resultBox = document.getElementById('compareResult');
+    if (!c1 || !c2) return alert("Enter two cities");
+    
+    resultBox.innerHTML = "Loading...";
+    const getComp = async (city) => {
+        const wRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API_KEY}`);
+        return await wRes.json();
+    };
+
+    try {
+        const [w1, w2] = await Promise.all([getComp(c1), getComp(c2)]);
+        resultBox.innerHTML = `
+            <div class="card"><h4>${w1.name}</h4><p>Temp: ${w1.main.temp}°C</p><p>Wind: ${w1.wind.speed} m/s</p></div>
+            <div class="card"><h4>${w2.name}</h4><p>Temp: ${w2.main.temp}°C</p><p>Wind: ${w2.wind.speed} m/s</p></div>
+        `;
+    } catch (e) { resultBox.innerHTML = "Error fetching comparison."; }
+}
+
+// Currency Mapper
 function getCurrencyCode(cc) {
-    const map = { 'US':'USD','GB':'GBP','FR':'EUR','DE':'EUR','JP':'JPY','IN':'INR','CA':'CAD','AU':'AUD','MX':'MXN' };
+    const map = { 'US':'USD','GB':'GBP','FR':'EUR','DE':'EUR','JP':'JPY','IN':'INR','CA':'CAD','AU':'AUD','MY':'MYR' };
     return map[cc] || 'USD';
 }
 
-function renderChart(code, rate) {
-    const ctx = document.getElementById('currencyChart').getContext('2d');
-    if (myChart) myChart.destroy();
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['M','T','W','T','F','Today'],
-            datasets: [{ label: code, data: [rate*0.99, rate*1.01, rate*1.02, rate*0.98, rate*1.01, rate], borderColor: '#38bdf8', tension: 0.4 }]
-        },
-        options: { plugins: { legend: { display: false } } }
-    });
-}
+// Initialize default calculation on load
+window.onload = () => { calculateConversion(); };
