@@ -92,6 +92,9 @@ async function calculateConversion() {
     const base = document.getElementById('baseCurrency').value;
     const target = document.getElementById('targetCurrency').value;
 
+    // Do not attempt to fetch if target or base hasn't been selected yet
+    if (!target || !base) return;
+
     try {
         const res = await fetch(`https://v6.exchangerate-api.com/v6/${CURRENCY_API_KEY}/pair/${base}/${target}/${amount}`);
         const data = await res.json();
@@ -112,6 +115,9 @@ async function calculateConversion() {
 function swapCurrencies() {
     const baseSelect = document.getElementById('baseCurrency');
     const targetSelect = document.getElementById('targetCurrency');
+    
+    // Only swap if both sides are validly populated
+    if (!baseSelect.value || !targetSelect.value) return;
     
     // Swap the values
     const temp = baseSelect.value;

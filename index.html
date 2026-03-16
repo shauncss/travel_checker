@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Hub | Journey Smarter</title>
+    <meta name="viewport" content="width=device-width">
+    <title>Travel Checker</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,7 +12,7 @@
         <header>
             <div class="logo">
                 <span class="icon">✈️</span>
-                <h1>Travel Hub</h1>
+                <h1>Travel Checker</h1>
             </div>
             <nav class="pill-nav">
                 <button class="nav-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
@@ -22,17 +21,18 @@
             </nav>
         </header>
 
-        <section class="search-section">
-            <div class="search-box-container">
-                <div class="search-box">
-                    <input type="text" id="cityInput" placeholder="Where are you heading?" autocomplete="off">
-                    <button class="main-btn" onclick="fetchAllData(document.getElementById('cityInput').value)">Search</button>
-                </div>
-                <div id="suggestions" class="suggestions-list"></div>
-            </div>
-        </section>
-
         <main id="dashboardTab" class="tab-content active">
+            
+            <section class="search-section">
+                <div class="search-box-container">
+                    <div class="search-box">
+                        <input type="text" id="cityInput" placeholder="Where are you heading?" autocomplete="off">
+                        <button class="main-btn" onclick="fetchAllData(document.getElementById('cityInput').value)">Search</button>
+                    </div>
+                    <div id="suggestions" class="suggestions-list"></div>
+                </div>
+            </section>
+
             <div class="stack-layout">
                 <div class="card weather-hero" id="weatherResult">
                     <div class="card-header"><h3>Destination Weather</h3></div>
@@ -62,7 +62,8 @@
                             <button class="swap-btn" onclick="swapCurrencies()" title="Swap Currencies">⇄</button>
                             
                             <select id="targetCurrency" onchange="calculateConversion()">
-                                <option value="JPY" selected>JPY</option>
+                                <option value="" selected disabled>Select Target</option>
+                                <option value="JPY">JPY</option>
                                 <option value="USD">USD</option>
                                 <option value="MYR">MYR</option>
                                 <option value="EUR">EUR</option>
