@@ -4,30 +4,42 @@ Travel Checker is a dynamic web application that allows users to seamlessly comp
 
 ## 🌟 Features
 
-* **Smart Setup:** Automatically fetches a list of over 195 countries to populate the home and destination dropdown menus, sorted alphabetically. It automatically pre-fills comparison cities using the respective capital cities of the selected countries.
-* **Currency Conversion:** Calculates real-time exchange rates between the two countries' currencies and visualizes a simulated 30-day historical trend using a line chart.
+* **Smart Setup:** Utilizes a localized, modular dataset of over 195 countries to populate the dropdown menus, entirely eliminating CORS errors and API rate limits. It automatically pre-fills comparison cities using the respective capital cities.
+* **Currency Conversion & Graphing:** Calculates real-time exchange rates and visualizes a 30-day historical trend. The graph implementation strictly utilizes the HTML5 `<canvas>` element for high-performance, flicker-free rendering.
 * **Weather Comparison:** Retrieves and compares real-time weather data between two cities, displaying the current temperature (in Celsius), general weather condition, and humidity percentage.
 * **Time Zone Tracking:** Compares the current local time and displays the exact UTC offset for the selected locations.
 * **Modern UI:** Features a sleek, dark-themed user interface utilizing glassmorphism effects, powered by a custom CSS layout and the "Plus Jakarta Sans" font family. 
 
 ## 🛠️ Technologies Used
 
-* **HTML5 & CSS3:** For structuring and styling the responsive, tab-based user interface.
-* **Vanilla JavaScript:** Handles API data fetching, tab navigation logic, and DOM manipulation.
-* **Chart.js:** Used via CDN to render the responsive 1-month currency exchange rate line chart.
+* **Vite:** Next-generation frontend tooling providing a fast development server and optimized builds.
+* **HTML5 Canvas & CSS3:** For structuring the responsive UI and rendering the dynamic currency trendlines.
+* **Vanilla JavaScript (ES6+):** Handles modular data imports (`countries.js`), asynchronous data fetching, and DOM manipulation.
+* **Chart.js:** Leverages the native Canvas API to render the responsive 1-month currency exchange rate line chart.
 
-## 🔌 APIs Integration
+## 🔌 API Integrations
 
-The application relies on several external APIs to gather data:
-1.  **REST Countries API** (`restcountries.com`): Retrieves the global list of countries, their common names, 2-letter country codes, currencies, and capital cities.
-2.  **ExchangeRate-API** (`v6.exchangerate-api.com`): Fetches the latest conversion rate pairs for the selected currencies.
-3.  **OpenWeatherMap API** (`api.openweathermap.org`): Used for both the Weather Tab (fetching temperature and conditions) and the Time Zone Tab (utilizing the geolocation's timezone offset data).
+The application relies on a hybrid data architecture:
+1.  **ExchangeRate-API** (`v6.exchangerate-api.com`): Fetches the live conversion rate pairs.
+2.  **Frankfurter API** (`api.frankfurter.app`): Retrieves reliable, 30-day historical exchange data sourced directly from the European Central Bank (includes an algorithmic fallback for non-ECB tracked currencies).
+3.  **OpenWeatherMap API** (`api.openweathermap.org`): Used for both the Weather Tab (fetching temperature/conditions) and the Time Zone Tab (utilizing the geolocation's timezone offset).
+4.  **CountriesNow API** (`countriesnow.space`): Fetches a supplemental list of major cities for the selected countries to populate the comparison dropdowns.
 
 ## 🚀 Setup & Usage
 
-1.  Clone or download the project files into a single directory.
-2.  Open `index.html` in any modern web browser to run the application locally. No build step or package installation is required.
-3.  Select a "Home Country" and a "Destination Country" from the dropdowns, then click "Compare" to load the results. 
-4.  Navigate between the Currency, Weather, and Time Zone pill-shaped navigation tabs to view the different datasets.
+This project utilizes Vite, requiring Node.js to run the local development server.
 
-*Note: API Keys for Weather and Currency are currently hardcoded in `script.js` for demonstration purposes. For production environments, it is recommended to secure these keys appropriately.*
+1.  Clone or download the project files into a single directory.
+2.  Open your terminal and navigate to the project folder.
+3.  Install the required Node packages and dependencies:
+    ```bash
+    npm install
+    ```
+4.  Boot up the development server:
+    ```bash
+    npm run dev
+    ```
+5.  Open the provided `localhost` URL in any modern web browser.
+6.  Select a "Home Country" and a "Destination Country", then click "Compare Destinations" to load the datasets. 
+
+> **Note on Security:** API Keys for OpenWeather and ExchangeRate-API are currently hardcoded in `script.js` for local demonstration purposes. Before deploying to production, migrate these to environment variables (`.env`).

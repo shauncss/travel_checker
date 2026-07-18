@@ -1,0 +1,32 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node Modules (Ignores all downloaded package/JSON dependencies)
+node_modules
+.npm
+
+# Vite Build Output
+dist
+dist-ssr
+
+# Local Environment Variables (Keeps your API keys safe if you use .env later)
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

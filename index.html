@@ -3,14 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Checker</title>
+    <title>Travel Checker - Consumer Grade</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Phase 1: Inject Chart.js via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- ES Module Application Boot -->
+    <script type="module" src="script.js"></script>
 </head>
 <body>
+    <div id="toastContainer" class="toast-container"></div>
+
     <div class="container">
-        
+        <!-- Top Card: Configuration -->
         <div class="card top-card">
             <div class="logo">
                 <span class="icon">✈️</span>
@@ -19,63 +26,75 @@
             
             <div class="selectors">
                 <div class="input-group">
-                    <label>Home Country</label>
-                    <select id="homeCountry"></select>
+                    <label for="homeCountry">Home Country</label>
+                    <select id="homeCountry">
+                        <option value="" disabled selected>Loading...</option>
+                    </select>
                 </div>
                 <div class="input-group">
-                    <label>Destination Country</label>
+                    <label for="destCountry">Destination Country</label>
                     <select id="destCountry">
-                        <option value="" disabled selected>Select Country</option>
+                        <option value="" disabled selected>Loading...</option>
                     </select>
                 </div>
             </div>
-            <button class="main-btn" onclick="runComparison()">Compare</button>
+            <button class="main-btn" id="compareBtn">Compare Destinations</button>
         </div>
 
+        <!-- Bottom Card: Results -->
         <div class="card bottom-card" id="resultsCard" style="display: none;">
             <nav class="pill-nav">
-                <button class="nav-btn active" onclick="switchTab('currency', this)">Currency</button>
-                <button class="nav-btn" onclick="switchTab('weather', this)">Weather</button>
-                <button class="nav-btn" onclick="switchTab('timezone', this)">Time Zone</button>
+                <button class="nav-btn active" data-tab="currency">Currency</button>
+                <button class="nav-btn" data-tab="weather">Weather</button>
+                <button class="nav-btn" data-tab="timezone">Time Zone</button>
             </nav>
 
+            <!-- Currency Tab -->
             <main id="currencyTab" class="tab-content active">
                 <div class="converter-interface">
                     <div class="conversion-row">
-                        <input type="number" id="convertAmount" value="1" oninput="updateCurrencyDisplay()">
-                        <span id="baseCurrencyLabel" class="currency-label">USD</span>
+                        <input type="number" id="convertAmount" value="1" min="0.01" step="0.01">
+                        <span id="baseCurrencyLabel" class="currency-label">---</span>
                         <span class="equals">=</span>
                         <h2 id="convertedValue">--</h2>
-                        <span id="targetCurrencyLabel" class="currency-label">EUR</span>
+                        <span id="targetCurrencyLabel" class="currency-label">---</span>
                     </div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="currencyChart"></canvas>
+                
+                <!-- Phase 1: Add Canvas wrapper for historical graph -->
+                <div class="graph-container" style="position: relative; height:200px; width:100%; margin-top: 1.5rem;">
+                    <canvas id="currencyHistoryChart"></canvas>
+                </div>
+
+                <div class="currency-footer">
+                    <p class="text-secondary text-sm">Live conversion rate applied.</p>
                 </div>
             </main>
 
+            <!-- Weather Tab -->
             <main id="weatherTab" class="tab-content">
                 <div class="compare-inputs">
-                    <input type="text" id="weatherCity1" placeholder="City 1">
+                    <select id="weatherCity1" class="city-select"></select>
                     <span class="vs">VS</span>
-                    <input type="text" id="weatherCity2" placeholder="City 2">
-                    <button class="small-btn" onclick="compareWeather()">Check</button>
+                    <select id="weatherCity2" class="city-select"></select>
                 </div>
-                <div id="weatherResult" class="compare-grid"></div>
+                <div id="weatherResult" class="compare-grid">
+                    <!-- Weather data injected here -->
+                </div>
             </main>
 
+            <!-- Timezone Tab -->
             <main id="timezoneTab" class="tab-content">
                 <div class="compare-inputs">
-                    <input type="text" id="tzCity1" placeholder="City 1">
+                    <select id="tzCity1" class="city-select"></select>
                     <span class="vs">&</span>
-                    <input type="text" id="tzCity2" placeholder="City 2">
-                    <button class="small-btn" onclick="compareTimezones()">Check</button>
+                    <select id="tzCity2" class="city-select"></select>
                 </div>
-                <div id="timezoneResult" class="compare-grid"></div>
+                <div id="timezoneResult" class="compare-grid">
+                    <!-- Timezone data injected here -->
+                </div>
             </main>
         </div>
-
     </div>
-    <script src="script.js"></script>
 </body>
 </html>
