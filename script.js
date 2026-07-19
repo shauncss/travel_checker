@@ -1,11 +1,13 @@
 import { countriesData } from './countries.js';
+import {
+    getLiveCurrency,
+    getHistoricalCurrency,
+    getWeather,
+    getTimezone,
+    getMainCities
+} from './services/api.js';
 
 // --- Configuration & State ---
-const API_KEYS = {
-    WEATHER: 'b434ff3976028ba7857717d7199e82dc',
-    CURRENCY: '34e27998104b1a49bd15e736'
-};
-
 const state = {
     countriesMap: {},
     currentExchangeRate: 1,
@@ -40,17 +42,6 @@ function showToast(message, type = 'error') {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
-}
-
-async function safeFetchJSON(url, options = {}) {
-    const res = await fetch(url, options);
-    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-    
-    const contentType = res.headers.get("content-type");
-    if (contentType && contentType.includes("text/html")) {
-        throw new SyntaxError("API returned HTML instead of JSON data.");
-    }
-    return await res.json();
 }
 
 // --- Initialization ---
@@ -144,8 +135,8 @@ async function runComparison() {
 
     try {
         const [homeCities, destCities] = await Promise.all([
-            fetchMainCities(state.home.name, state.home.capital),
-            fetchMainCities(state.dest.name, state.dest.capital)
+            getMainCities(state.home.name, state.home.capital),
+            getMainCities(state.dest.name, state.dest.capital)
         ]);
 
         populateCitySelects(homeCities, destCities);
@@ -164,27 +155,6 @@ async function runComparison() {
     }
 }
 
-async function fetchMainCities(countryName, capital) {
-    try {
-        const data = await safeFetchJSON('https://countriesnow.space/api/v0.1/countries/states', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ country: countryName })
-        });
-        
-        let mainCities = data.data.states.map(s => s.name.replace(/ State| Province| Region/ig, '').trim());
-        
-        if (mainCities.includes(capital)) {
-            mainCities = mainCities.filter(c => c !== capital);
-        }
-        mainCities.unshift(capital);
-        
-        return [...new Set(mainCities)];
-    } catch (e) {
-        return [capital];
-    }
-}
-
 function populateCitySelects(homeCities, destCities) {
     const buildOptions = (cities) => cities.map(c => `<option value="${c}">${c}</option>`).join('');
     DOM.weatherCity1.innerHTML = buildOptions(homeCities);
@@ -199,12 +169,8 @@ async function fetchCurrency(base, target) {
     document.getElementById('targetCurrencyLabel').textContent = target;
     
     try {
-        // Fetch Live Rate
-        const data = await safeFetchJSON(`https://v6.exchangerate-api.com/v6/${API_KEYS.CURRENCY}/pair/${base}/${target}`);
-        state.currentExchangeRate = data.conversion_rate;
+        state.currentExchangeRate = await getLiveCurrency(base, target);
         updateCurrencyDisplay();
-        
-        // Concurrently trigger historical fetch
         fetchHistoricalCurrency(base, target);
     } catch (e) { 
         showToast("Live currency fetch failed.");
@@ -232,14 +198,12 @@ async function fetchHistoricalCurrency(base, target) {
     const startStr = startDate.toISOString().split('T')[0];
 
     try {
-        const data = await safeFetchJSON(`https://api.frankfurter.app/${startStr}..${endStr}?from=${base}&to=${target}`);
-        
+        const data = await getHistoricalCurrency(base, target, startStr, endStr);
         const labels = Object.keys(data.rates);
         const rates = labels.map(date => data.rates[date][target]);
-        
         renderChart(labels, rates, base, target);
     } catch (e) {
-        // Fallback: Generate simulated trendline using the live rate for non-ECB currencies
+        // Fallback: Generate simulated trendline
         const labels = [];
         const rates = [];
         let rate = state.currentExchangeRate;
@@ -264,7 +228,6 @@ function renderChart(labels, data, base, target) {
     const ctx = document.getElementById('currencyHistoryChart');
     if (!ctx) return;
     
-    // Wipe previous instance from memory before rendering
     if (state.chartInstance) {
         state.chartInstance.destroy();
     }
@@ -301,7 +264,7 @@ function renderChart(labels, data, base, target) {
                 }
             },
             scales: {
-                x: { display: false }, // Hidden for a clean sparkline aesthetic
+                x: { display: false },
                 y: { 
                     ticks: { color: '#94a3b8', font: { family: "'Plus Jakarta Sans', sans-serif" } },
                     grid: { color: 'rgba(255, 255, 255, 0.05)' }
@@ -341,12 +304,8 @@ async function compareWeather() {
     
     resultBox.innerHTML = `<p class="text-secondary text-center col-span-2">Fetching weather data...</p>`;
     
-    const getW = async (city) => {
-        return await safeFetchJSON(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEYS.WEATHER}`);
-    };
-
     try {
-        const [w1, w2] = await Promise.all([getW(c1), getW(c2)]);
+        const [w1, w2] = await Promise.all([getWeather(c1), getWeather(c2)]);
         resultBox.innerHTML = `
             <div class="data-card"><h4>${w1.name}</h4><h2>${Math.round(w1.main.temp)}°C</h2><p>${w1.weather[0].main}</p><p class="text-sm text-secondary">Humidity: ${w1.main.humidity}%</p></div>
             <div class="data-card"><h4>${w2.name}</h4><h2>${Math.round(w2.main.temp)}°C</h2><p>${w2.weather[0].main}</p><p class="text-sm text-secondary">Humidity: ${w2.main.humidity}%</p></div>
@@ -363,20 +322,8 @@ async function compareTimezones() {
 
     resultBox.innerHTML = `<p class="text-secondary text-center col-span-2">Calculating local times...</p>`;
 
-    const getT = async (city) => {
-        const data = await safeFetchJSON(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEYS.WEATHER}`);
-        
-        const offsetHours = data.timezone / 3600;
-        const utcString = offsetHours >= 0 ? `UTC+${offsetHours}` : `UTC${offsetHours}`;
-        
-        const localTime = new Date(new Date().getTime() + (data.timezone * 1000));
-        const timeString = localTime.getUTCHours().toString().padStart(2, '0') + ":" + localTime.getUTCMinutes().toString().padStart(2, '0');
-        
-        return { name: data.name, time: timeString, utc: utcString };
-    };
-
     try {
-        const [t1, t2] = await Promise.all([getT(c1), getT(c2)]);
+        const [t1, t2] = await Promise.all([getTimezone(c1), getTimezone(c2)]);
         resultBox.innerHTML = `
             <div class="data-card"><h4>${t1.name}</h4><h2 class="time-val">${t1.time}</h2><p class="text-sm text-secondary">${t1.utc}</p></div>
             <div class="data-card"><h4>${t2.name}</h4><h2 class="time-val">${t2.time}</h2><p class="text-sm text-secondary">${t2.utc}</p></div>
