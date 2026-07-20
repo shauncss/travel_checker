@@ -10,9 +10,10 @@ Travel Checker is a dynamic web application that allows users to seamlessly comp
 * **Time Zone Tracking:** Compares the current local time and displays the exact UTC offset for the selected locations.
 * **Modern UI:** Features a sleek, dark-themed user interface utilizing glassmorphism effects, powered by a custom CSS layout and the "Plus Jakarta Sans" font family. 
 
-## 🛠️ Technologies Used
+## 🛠️ Technologies & Architecture
 
 * **Vite:** Next-generation frontend tooling providing a fast development server and optimized builds.
+* **Modular Architecture:** Source code is neatly organized within a `src/` directory, with network requests securely decoupled into a dedicated `services/api.js` layer for improved maintainability.
 * **HTML5 Canvas & CSS3:** For structuring the responsive UI and rendering the dynamic currency trendlines.
 * **Vanilla JavaScript (ES6+):** Handles modular data imports (`countries.js`), asynchronous data fetching, and DOM manipulation.
 * **Chart.js:** Leverages the native Canvas API to render the responsive 1-month currency exchange rate line chart.
@@ -29,17 +30,21 @@ The application relies on a hybrid data architecture:
 
 This project utilizes Vite, requiring Node.js to run the local development server.
 
-1.  Clone or download the project files into a single directory.
-2.  Open your terminal and navigate to the project folder.
+1.  Clone or download the project files.
+2.  Open your terminal and navigate to the root project folder.
 3.  Install the required Node packages and dependencies:
     ```bash
     npm install
     ```
-4.  Boot up the development server:
-    ```bash
-    npm run dev
+4.  **Environment Variables:** For security, API keys are kept out of the source code. Create a file named exactly `.env` in the root directory (next to `package.json`). Add your keys using the required Vite prefix:
+    ```env
+    VITE_WEATHER_API_KEY=your_openweathermap_api_key_here
+    VITE_CURRENCY_API_KEY=your_exchangerate_api_key_here
     ```
-5.  Open the provided `localhost` URL in any modern web browser.
-6.  Select a "Home Country" and a "Destination Country", then click "Compare Destinations" to load the datasets. 
-
-> **Note on Security:** API Keys for OpenWeather and ExchangeRate-API are currently hardcoded in `script.js` for local demonstration purposes. Before deploying to production, migrate these to environment variables (`.env`).
+5.  **Launch the Server:** 
+    *   **Option A (Quick Launch):** Double-click the provided `run.bat` (Windows) or execute `./run.sh` (Mac/Linux) to automatically start the server and open your default web browser.
+    *   **Option B (Terminal):** Boot up the development server manually:
+        ```bash
+        npm run dev -- --open
+        ```
+6.  Select a "Home Country" and a "Destination Country", then click "Compare Destinations" to load the datasets.
